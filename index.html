@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tu Pokémon y el mío 💙</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body{
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background:linear-gradient(180deg,#b3e5ff,#e4f6ff);
+      color:#04445f;
+    }
+
+    .app{
+      width:95%;
+      max-width:980px;
+      background:rgba(255,255,255,0.9);
+      border-radius:26px;
+      padding:18px;
+      box-shadow:0 0 30px rgba(0,0,0,0.25);
+      display:grid;
+      grid-template-columns:minmax(0,2fr) minmax(0,1.2fr);
+      gap:16px;
+    }
+
+    @media(max-width:800px){
+      .app{
+        grid-template-columns:1fr;
+      }
+    }
+
+    header{
+      grid-column:1 / -1;
+      text-align:center;
+      margin-bottom:6px;
+    }
+
+    header h1{
+      font-size:1.9rem;
+      color:#015a8f;
+      margin-bottom:4px;
+    }
+
+    header p{
+      font-size:0.95rem;
+      opacity:0.9;
+    }
+
+    .tag{
+      display:inline-block;
+      background:#015a8f;
+      color:#e4f6ff;
+      border-radius:999px;
+      padding:2px 10px;
+      font-size:0.8rem;
+      margin-top:4px;
+    }
+
+    .card{
+      background:#f4fbff;
+      border-radius:18px;
+      border:1px solid #c6e7ff;
+      padding:12px 14px;
+    }
+
+    .game-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:0.9rem;
+      margin-bottom:6px;
+      color:#015a8f;
+    }
+
+    canvas{
+      width:100%;
+      height:auto;
+      border-radius:16px;
+      border:1px solid #b8e0ff;
+      background:radial-gradient(circle at top,#d7f0ff,#9fd6ff);
+    }
+
+    .controls{
+      font-size:0.8rem;
+      margin-top:4px;
+      color:#05506f;
+    }
+
+    .controls kbd{
+      background:#e1f3ff;
+      border-radius:6px;
+      padding:2px 6px;
+      font-size:0.75rem;
+      border:1px solid #b6dcff;
+      margin:0 2px;
+    }
+
+    .btn{
+      border:none;
+      background:#0288d1;
+      color:#fff;
+      padding:6px 14px;
+      border-radius:999px;
+      cursor:pointer;
+      font-size:0.85rem;
+      transition:0.2s;
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 3px 8px rgba(0,0,0,0.25);
+    }
+
+    .messages-title{
+      font-size:1.05rem;
+      color:#015a8f;
+      margin-bottom:4px;
+    }
+
+    .messages-desc{
+      font-size:0.85rem;
+      color:#05506f;
+    }
+
+    .love-messages{
+      max-height:260px;
+      overflow-y:auto;
+      margin-top:6px;
+      padding-right:4px;
+      scrollbar-width:thin;
+    }
+
+    .love-message{
+      background:#ffffff;
+      border-radius:13px;
+      border:1px solid #cbe7ff;
+      padding:8px 9px;
+      margin-bottom:6px;
+      font-size:0.9rem;
+      display:flex;
+      gap:6px;
+      align-items:flex-start;
+      opacity:0;
+      transform:translateY(4px);
+      animation:fadeInMsg .35s forwards;
+    }
+
+    .love-message .icon{
+      font-size:1.1rem;
+      flex-shrink:0;
+      margin-top:1px;
+    }
+
+    .final-message{
+      margin-top:10px;
+      padding:8px;
+      border-radius:13px;
+      background:linear-gradient(125deg,rgba(2,136,209,0.12),rgba(0,172,193,0.2));
+      font-size:0.9rem;
+      color:#015a8f;
+      display:none;
+    }
+
+    .final-message strong{
+      font-size:1rem;
+    }
+
+    @keyframes fadeInMsg{
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+
+    /* chispitas en el fondo del juego */
+    .spark{
+      position:absolute;
+      width:6px;
+      height:6px;
+      border-radius:50%;
+      background:#ffffffaa;
+      pointer-events:none;
+      animation:spark 0.7s ease-out forwards;
+    }
+    @keyframes spark{
+      from{transform:scale(0.3);opacity:1;}
+      to{transform:scale(1.4);opacity:0;}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Tu Pokémon y el mío 💙</h1>
+    <p>
+      En este jueguito somos dos pokémon Astetiks,pero yo me jodi porque fui partido en 20 pedacitos.
+      Junta los pokecorazones y ensambla a Jurjur astetik,cada pokemon atrapado te dara un mensajito. 🫶
+    </p>
+    <div class="tag">Modo Pokémons Astetiks activado ⚡</div>
+  </header>
+
+  <!-- LADO IZQUIERDO: JUEGO -->
+  <section class="card" style="position:relative;">
+    <div class="game-header">
+      <div>
+        <strong>Pokecorazones atrapados:</strong>
+        <span id="score">0</span>/<span id="total"></span>
+      </div>
+      <button class="btn" id="resetBtn">Reiniciar partida</button>
+    </div>
+    <canvas id="gameCanvas" width="520" height="320"></canvas>
+    <div class="controls">
+      Mueve a <strong>tu pokémon</strong> con
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o con
+      <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd>.
+      <br>
+      Los pokecorazones se mueven y huyen un poquito de ti, atrápalos todos. 💫
+    </div>
+  </section>
+
+  <!-- LADO DERECHO: MENSAJES -->
+  <section class="card">
+    <h2 class="messages-title">Mensajes de tu entrenador 💌</h2>
+    <p class="messages-desc">
+      Cada pokecorazón que atrapes desbloquea un pensamiento, todo estará bien,aunque los problemas persistan se que los superaremos como siempre... juntos.
+      Porque sí, eres mi pokémon favorito.
+    </p>
+    <div class="love-messages" id="loveMessages"></div>
+    <div class="final-message" id="finalMessage">
+      <strong>¡Has atrapado todos los pokecorazones! 🎉</strong>
+      <p style="margin-top:4px;">
+        Si este fuera un juego de verdad, saldría el texto:
+        <br><em>“Felicidades, has ganado el corazón de tu entrenador para siempre”.</em><br>
+        Pero no es un juego: eso ya lo tenías. 💙
+      </p>
+    </div>
+  </section>
+</div>
+
+<script>
+  // --------- MENSAJES ESTILO POKÉMON (PUEDES CAMBIARLOS) ----------
+  const loveTexts = [
+  "Me gusta pensar que tú y yo somos como dos pokémon que todavía no están en su forma final… pero ya se quieren mucho incluso en esta fase.",
+  "No importa si estamos en pausa: lo que siento por ti sigue evolucionando silenciosamente, porque se que todo estara bien...",
+  "A veces crecer duele un poquito, pero qué bonito es crecer contigo aunque estemos a distancia.",
+  "Mañana deberiamos terminar de ver la peli,jugar zelda,aunque amo pasar contigo de cualquier manera.",
+  "Me gusta que quieras que nuestra relación evolucione, porque significa que no te rendiste: solo quieres que seamos mejores.",
+  "La verdad me pone feliz que estemos juntos a pesar de que todo cuelgue de un hilo...",
+  "Si esta etapa es un entrenamiento, créeme que vale la pena. Porque tú siempre has sido mi pokémon especial.",
+  "Antes quería que todo fuera rápido, ahora entiendo que las mejores evoluciones toman tiempo la verdad lo veo necesario ksk...",
+  "A veces pienso en nosotros como en un equipo que perdió una batalla, pero no la partida. Y eso me da fuerza.",
+  "No necesitas estar perfecta para que te quiera; me gustas incluso cuando estás aprendiendo, fallando o dudando.",
+  "Yo tampoco estoy en mi forma final, pero quiero llegar a ella contigo al lado. Sin prisas, sin presión.",
+  "Lo que tenemos no se apagó: simplemente está cambiando de fase, como cuando un pokémon se prepara para evolucionar.",
+  "Me encanta que todavía hablemos, que todavía nos pensemos, que todavía nos queramos. Eso dice más que cualquier etiqueta.",
+  "Aunque estemos tomándonos un tiempo, mi cariño por ti no se fue a ningún lado. Solo está creciendo en silencio.",
+  "No sé qué seremos mañana, pero sé que quiero que este cariño evolucione contigo, no con nadie más.",
+  "Si algún día volvemos a estar completamente juntos, quiero que sea porque ambos alcanzamos una mejor versión de nosotros.",
+  "Lo bonito es que no partimos de cero: partimos de lo que ya sentimos, solo que ahora con más calma, más madurez y más corazón.",
+  "Gracias por seguir aquí, incluso en pausa. Eso ya es una evolución enorme.",
+  "Ojalá este tiempo sea el que nos haga convertirnos en la mejor versión del ‘nosotros’. Como una megaevolución, pero emocional.",
+  "Y pase lo que pase después, quiero que sepas algo: haberte amado, amarte y seguir amándote… siempre será de mis cosas favoritas."
+];
+
+
+  // --------- VARIABLES DEL JUEGO ----------
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const scoreEl = document.getElementById('score');
+  const totalEl = document.getElementById('total');
+  const resetBtn = document.getElementById('resetBtn');
+  const loveMessagesContainer = document.getElementById('loveMessages');
+  const finalMessageEl = document.getElementById('finalMessage');
+
+  const player = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    radius: 14,
+    speed: 3.4,
+    vx: 0,
+    vy: 0
+  };
+
+  let hearts = [];
+  let collectedCount = 0;
+  let unlockedIndices = new Set();
+  let keys = {};
+
+  // --------- CREACIÓN DE POKECORAZONES ----------
+  function randomPosition(radius){
+    const margin = 30;
+    return {
+      x: Math.random() * (canvas.width - margin*2) + margin,
+      y: Math.random() * (canvas.height - margin*2) + margin
+    };
+  }
+
+  function createHearts(){
+    hearts = [];
+    for(let i=0;i<loveTexts.length;i++){
+      const pos = randomPosition(12);
+      const baseSpeed = Math.random()*1.4 + 0.8;
+      const angle = Math.random()*Math.PI*2;
+      hearts.push({
+        x: pos.x,
+        y: pos.y,
+        radius: 11,
+        collected: false,
+        textIndex: i,
+        vx: Math.cos(angle)*baseSpeed,
+        vy: Math.sin(angle)*baseSpeed,
+        maxSpeed: baseSpeed*1.8
+      });
+    }
+    totalEl.textContent = hearts.length;
+  }
+
+  function resetGame(){
+    player.x = canvas.width/2;
+    player.y = canvas.height/2;
+    player.vx = 0;
+    player.vy = 0;
+    collectedCount = 0;
+    unlockedIndices.clear();
+    loveMessagesContainer.innerHTML = "";
+    finalMessageEl.style.display = "none";
+    createHearts();
+    updateScore();
+  }
+
+  function updateScore(){
+    scoreEl.textContent = collectedCount;
+  }
+
+  // --------- DIBUJAR FORMAS ----------
+  function drawPokeball(x,y,size,isPlayer){
+    // cuerpo
+    const grad = ctx.createRadialGradient(
+      x - size/3, y - size/3, size/4,
+      x, y, size
+    );
+    grad.addColorStop(0, isPlayer ? "#b3e5ff" : "#ffecf2");
+    grad.addColorStop(1, isPlayer ? "#0288d1" : "#000080");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x,y,size,0,Math.PI*2);
+    ctx.fill();
+
+    // franja
+    ctx.strokeStyle = "rgba(0,0,40,0.65)";
+    ctx.lineWidth = size*0.35;
+    ctx.beginPath();
+    ctx.arc(x,y,size*0.65,Math.PI*0.15,Math.PI*0.85);
+    ctx.stroke();
+
+    // botón
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(x,y,size*0.35,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = "#9fcfff";
+    ctx.beginPath();
+    ctx.arc(x,y,size*0.2,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  function drawBackground(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const gradient = ctx.createLinearGradient(0,0,0,canvas.height);
+    gradient.addColorStop(0,"#d7f0ff");
+    gradient.addColorStop(1,"#9fd6ff");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // nubecitas
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    for(let i=0;i<4;i++){
+      const y = 40 + i*60;
+      ctx.beginPath();
+      ctx.ellipse(60+i*110,y,35,18,0,0,Math.PI*2);
+      ctx.ellipse(90+i*110,y-6,25,16,0,0,Math.PI*2);
+      ctx.ellipse(120+i*110,y,30,17,0,0,Math.PI*2);
+      ctx.fill();
+    }
+  }
+
+  function drawPlayer(){
+    drawPokeball(player.x,player.y,player.radius,true);
+  }
+
+  function drawHearts(){
+    hearts.forEach(h=>{
+      if(!h.collected){
+        drawPokeball(h.x,h.y,h.radius,false);
+      }
+    });
+  }
+
+  // --------- MOVIMIENTO ----------
+  function handleInput(){
+    player.vx = 0;
+    player.vy = 0;
+    if(keys["ArrowUp"] || keys["w"]) player.vy = -player.speed;
+    if(keys["ArrowDown"] || keys["s"]) player.vy = player.speed;
+    if(keys["ArrowLeft"] || keys["a"]) player.vx = -player.speed;
+    if(keys["ArrowRight"] || keys["d"]) player.vx = player.speed;
+  }
+
+  function updatePlayer(){
+    player.x += player.vx;
+    player.y += player.vy;
+
+    if(player.x - player.radius < 0) player.x = player.radius;
+    if(player.x + player.radius > canvas.width) player.x = canvas.width - player.radius;
+    if(player.y - player.radius < 0) player.y = player.radius;
+    if(player.y + player.radius > canvas.height) player.y = canvas.height - player.radius;
+  }
+
+  // corazones se mueven y huyen un poco cuando estás cerca
+  function updateHearts(){
+  hearts.forEach(h=>{
+    if(h.collected) return;
+
+    const dx = h.x - player.x;
+    const dy = h.y - player.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+
+    // HUYEN MÁS FUERTE Y DESDE MÁS LEJOS
+    if(dist < 170 && dist > 0){
+      // mientras más cerca esté, más fuerte huyen
+      const intensidad = (170 - dist) / 170; // entre 0 y 1
+      const baseForce = 0.20;               // sube esto para hacerlo aún más difícil
+      const force = baseForce * intensidad;
+
+      h.vx += (dx/dist)*force;
+      h.vy += (dy/dist)*force;
+    }
+
+    // pequeño movimiento aleatorio para que no sea tan predecible
+    h.vx += (Math.random() - 0.5) * 0.02;
+    h.vy += (Math.random() - 0.5) * 0.02;
+
+    // limitar velocidad
+    const speed = Math.sqrt(h.vx*h.vx + h.vy*h.vy);
+    if(speed > h.maxSpeed){
+      h.vx = (h.vx/speed)*h.maxSpeed;
+      h.vy = (h.vy/speed)*h.maxSpeed;
+    }
+
+    h.x += h.vx;
+    h.y += h.vy;
+
+    // rebote bordes
+    if(h.x - h.radius < 5){
+      h.x = h.radius + 5;
+      h.vx *= -1;
+    }
+    if(h.x + h.radius > canvas.width - 5){
+      h.x = canvas.width - h.radius - 5;
+      h.vx *= -1;
+    }
+    if(h.y - h.radius < 5){
+      h.y = h.radius + 5;
+      h.vy *= -1;
+    }
+    if(h.y + h.radius > canvas.height - 5){
+      h.y = canvas.height - h.radius - 5;
+      h.vy *= -1;
+    }
+  });
+}
+
+
+  // --------- COLISIONES ----------
+  function distance(a,b){
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+
+  function makeSpark(x,y){
+    const parent = canvas.parentElement;
+    const rect = canvas.getBoundingClientRect();
+    const s = document.createElement("div");
+    s.className = "spark";
+    s.style.left = (x/ canvas.width * rect.width) + rect.left + "px";
+    s.style.top = (y/ canvas.height * rect.height) + rect.top + "px";
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),700);
+  }
+
+  function checkCollisions(){
+    hearts.forEach(h=>{
+      if(!h.collected){
+        const dist = distance(player,h);
+        if(dist < player.radius + h.radius + 2){
+          h.collected = true;
+          collectedCount++;
+          updateScore();
+          unlockMessage(h.textIndex);
+          makeSpark(h.x,h.y);
+
+          if(collectedCount === hearts.length){
+            showFinalMessage();
+          }
+        }
+      }
+    });
+  }
+
+  // --------- MENSAJES ----------
+  function unlockMessage(index){
+    if(unlockedIndices.has(index)) return;
+    unlockedIndices.add(index);
+    const msg = document.createElement("div");
+    msg.className = "love-message";
+    msg.innerHTML = `
+      <span class="icon">💙</span>
+      <span>${loveTexts[index]}</span>
+    `;
+    loveMessagesContainer.appendChild(msg);
+    loveMessagesContainer.scrollTop = loveMessagesContainer.scrollHeight;
+  }
+
+  function showFinalMessage(){
+    finalMessageEl.style.display = "block";
+  }
+
+  // --------- LOOP PRINCIPAL ----------
+  function gameLoop(){
+    handleInput();
+    updatePlayer();
+    updateHearts();
+
+    drawBackground();
+    drawHearts();
+    drawPlayer();
+    checkCollisions();
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  // --------- INPUT ----------
+  window.addEventListener("keydown",e=>{
+    keys[e.key] = true;
+  });
+  window.addEventListener("keyup",e=>{
+    keys[e.key] = false;
+  });
+
+  resetBtn.addEventListener("click",resetGame);
+
+  // --------- INICIO ----------
+  createHearts();
+  updateScore();
+  gameLoop();
+</script>
+</body>
+</html>
