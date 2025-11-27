@@ -181,6 +181,44 @@
         transform:translateY(0);
       }
     }
+    /* CONTROLES PARA CELULAR */
+.mobile-controls {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+}
+
+.mobile-controls .row {
+  display: flex;
+  gap: 14px;
+  margin: 6px 0;
+}
+
+.mc-btn {
+  width: 60px;
+  height: 60px;
+  font-size: 28px;
+  font-weight: bold;
+  border-radius: 12px;
+  border: 2px solid #a4d7ff;
+  background: #e8f7ff;
+  color: #015a8f;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+}
+
+.mc-btn:active {
+  background: #c9ecff;
+  transform: scale(0.92);
+}
+
+/* Solo aparece en pantallas pequeñas */
+@media (min-width: 700px) {
+  .mobile-controls {
+    display: none;
+  }
+}
 
     /* chispitas en el fondo del juego */
     .spark{
@@ -219,13 +257,16 @@
       <button class="btn" id="resetBtn">Reiniciar partida</button>
     </div>
     <canvas id="gameCanvas" width="520" height="320"></canvas>
-    <div class="controls">
-      Mueve a <strong>tu pokémon</strong> con
-      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o con
-      <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd>.
-      <br>
-      Los pokecorazones se mueven y huyen un poquito de ti, atrápalos todos. 💫
+    <div class="mobile-controls">
+    <div class="row">
+        <button class="mc-btn" data-dir="up">▲</button>
     </div>
+    <div class="row">
+        <button class="mc-btn" data-dir="left">◀</button>
+        <button class="mc-btn" data-dir="down">▼</button>
+        <button class="mc-btn" data-dir="right">▶</button>
+    </div>
+</div>
   </section>
 
   <!-- LADO DERECHO: MENSAJES -->
@@ -560,6 +601,29 @@
   });
 
   resetBtn.addEventListener("click",resetGame);
+  }
+
+  // ------ CONTROLES TÁCTILES PARA CELULAR ------
+const mobileButtons = document.querySelectorAll(".mc-btn");
+
+mobileButtons.forEach(btn => {
+  btn.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    const dir = btn.getAttribute("data-dir");
+    if (dir === "up") keys["w"] = true;
+    if (dir === "down") keys["s"] = true;
+    if (dir === "left") keys["a"] = true;
+    if (dir === "right") keys["d"] = true;
+  });
+
+  btn.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    keys["w"] = false;
+    keys["s"] = false;
+    keys["a"] = false;
+    keys["d"] = false;
+  });
+});
 
   // --------- INICIO ----------
   createHearts();
@@ -568,3 +632,4 @@
 </script>
 </body>
 </html>
+
